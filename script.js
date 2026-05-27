@@ -1140,7 +1140,6 @@ function buildLadderUI() {
         }
         
         li.innerHTML = `
-            <span class="ladder-num">LV ${i + 1}</span>
             <span class="ladder-val">${item.label}</span>
         `;
         gamePanel.ladderList.appendChild(li);
