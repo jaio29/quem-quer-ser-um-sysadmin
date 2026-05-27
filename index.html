@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quem Quer Ser um SysAdmin? - O Jogo da Sobrevivência de TI</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS Estilos -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glow-container"></div>
+    
+    <!-- Container Principal do Jogo -->
+    <div class="game-container">
+        
+        <!-- BARRA DE STATUS DO SISTEMA (HEADER) -->
+        <header class="system-header">
+            <div class="system-logo">
+                <span class="logo-terminal">>_</span>
+                <h1 class="logo-title">Quem Quer Ser um <span class="highlight">SysAdmin?</span></h1>
+            </div>
+            
+            <div class="system-telemetry">
+                <div class="telemetry-item" id="tel-cpu">
+                    <span class="label">CPU</span>
+                    <div class="progress-bar-small"><div class="fill" style="width: 12%"></div></div>
+                    <span class="value">12%</span>
+                </div>
+                <div class="telemetry-item" id="tel-ram">
+                    <span class="label">RAM</span>
+                    <div class="progress-bar-small"><div class="fill" style="width: 48%"></div></div>
+                    <span class="value">4.2GB</span>
+                </div>
+                <div class="telemetry-item" id="tel-uptime">
+                    <span class="label">UPTIME</span>
+                    <span class="value" id="uptime-telemetry">0d 0h 0m</span>
+                </div>
+                <div class="telemetry-item" id="tel-latency">
+                    <span class="label">LATENCIA</span>
+                    <span class="value" id="latency-telemetry">-- ms</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="game-body">
+            
+            <!-- TELA 1: BOAS-VINDAS / CONFIGURAÇÃO -->
+            <section id="screen-welcome" class="game-card glass active">
+                
+                <!-- BOTÕES PRINCIPAIS DE TELA INICIAL -->
+                <div class="welcome-actions" id="welcome-actions-menu">
+                    <button id="btn-deploy-start" class="btn-primary">
+                        <span class="btn-text">🚀 DEPLOY</span>
+                        <span class="btn-glow"></span>
+                    </button>
+                    <button id="btn-view-ranking" class="btn-secondary">
+                        <span class="btn-text">🏆 VER RANKING</span>
+                        <span class="btn-glow"></span>
+                    </button>
+                </div>
+                
+                <!-- FORMULÁRIO DE DEPLOY (OCULTO POR PADRÃO) -->
+                <div class="welcome-form hidden" id="welcome-form-deploy">
+                    <div class="input-group">
+                        <label for="player-name">> [sysadmin@local ~]$ read -p "Operador: " name</label>
+                        <div class="terminal-input-wrapper">
+                            <span class="terminal-prompt-symbol">$</span>
+                            <input type="text" id="player-name" placeholder="Ex: Linus Torvalds" autocomplete="off" maxlength="20">
+                        </div>
+                    </div>
+                    
+                    <div class="form-buttons-row">
+                        <button id="btn-confirm-deploy" class="btn-primary">
+                            <span class="btn-text">CONFIRMAR E RODAR PIPELINE</span>
+                            <span class="btn-glow"></span>
+                        </button>
+                        <button id="btn-back-menu" class="btn-secondary">
+                            <span class="btn-text">RETORNAR</span>
+                            <span class="btn-glow"></span>
+                        </button>
+                    </div>
+                </div>
+                
+            </section>
+
+            <!-- TELA 2: LOADER DE PERGUNTAS -->
+            <section id="screen-loader" class="game-card glass">
+                <div class="loader-content">
+                    <div class="cyber-spinner"></div>
+                    <h3>CONECTANDO AO BACKEND GEMINI...</h3>
+                    <div class="terminal-loader-logs" id="loader-logs">
+                        <p>> [SYSTEM] Carregando módulos do kernel...</p>
+                        <p>> [SYSTEM] Estabelecendo conexão segura com a IA...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TELA 3: PAINEL PRINCIPAL DE JOGO -->
+            <section id="screen-game" class="game-layout">
+                
+                <!-- COLUNA DO FLUXO DO JOGO -->
+                <div class="game-left-col">
+                    
+                    <!-- CARTÃO DA PERGUNTA -->
+                    <div class="question-card glass">
+                        <div class="question-header">
+                            <span class="badge" id="current-difficulty-badge">Fácil</span>
+                            <span class="question-index" id="question-index-display">Chamado #1 / 15</span>
+                        </div>
+                        <h2 class="question-text" id="question-text">Gargalo na CPU detectado, qual comando você executa imediatamente para auditar os processos ativos em tempo real?</h2>
+                    </div>
+                    
+                    <!-- GRID DE ALTERNATIVAS -->
+                    <div class="alternatives-grid">
+                        <button class="alt-btn glass" data-index="0">
+                            <span class="alt-letter">A</span>
+                            <span class="alt-text" id="alt-0-text">Alternativa A</span>
+                        </button>
+                        <button class="alt-btn glass" data-index="1">
+                            <span class="alt-letter">B</span>
+                            <span class="alt-text" id="alt-1-text">Alternativa B</span>
+                        </button>
+                        <button class="alt-btn glass" data-index="2">
+                            <span class="alt-letter">C</span>
+                            <span class="alt-text" id="alt-2-text">Alternativa C</span>
+                        </button>
+                        <button class="alt-btn glass" data-index="3">
+                            <span class="alt-letter">D</span>
+                            <span class="alt-text" id="alt-3-text">Alternativa D</span>
+                        </button>
+                    </div>
+
+                    <!-- BARRA DE AJUDAS E DESISTÊNCIA -->
+                    <div class="hud-bar glass">
+                        <div class="hud-section-title">> AJUDAS (CHAMADOS DE SUPORTE):</div>
+                        <div class="hud-controls">
+                            <!-- AJUDA 1: PULAR (sudo reboot) -->
+                            <button id="btn-help-skip" class="btn-hud" title="sudo reboot - Pula a pergunta atual (Máx. 3)">
+                                <span class="hud-icon">🔄</span>
+                                <div class="hud-info">
+                                    <span class="hud-label">sudo reboot</span>
+                                    <span class="hud-uses" id="skip-uses">3 Usos</span>
+                                </div>
+                            </button>
+                            
+                            <!-- AJUDA 2: REINICIAR SERVIDOR -->
+                            <button id="btn-help-cards" class="btn-hud" title="Reiniciar o Servidor - Elimina visualmente duas alternativas incorretas">
+                                <span class="hud-icon">🖥️</span>
+                                <div class="hud-info">
+                                    <span class="hud-label">Reiniciar Servidor</span>
+                                    <span class="hud-status" id="cards-status">Disponível</span>
+                                </div>
+                            </button>
+                            
+                            <!-- AJUDA 3: CHAMAR OS DEVS -->
+                            <button id="btn-help-interns" class="btn-hud" title="Chamar os Devs - Palpite dos desenvolvedores">
+                                <span class="hud-icon">👨‍💻</span>
+                                <div class="hud-info">
+                                    <span class="hud-label">Chamar os Devs</span>
+                                    <span class="hud-status" id="interns-status">Disponível</span>
+                                </div>
+                            </button>
+
+                            <!-- PARAR: PEDIR DEMISSÃO -->
+                            <button id="btn-help-quit" class="btn-hud btn-danger-action" title="Desistir e levar o dinheiro acumulado">
+                                <span class="hud-icon">🚪</span>
+                                <div class="hud-info">
+                                    <span class="hud-label">PEDIR DEMISSÃO</span>
+                                    <span class="hud-status">Garantir Saldo</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUNA DO LADDER DE PONTUAÇÃO (PRÊMIOS) -->
+                <div class="game-right-col glass">
+                    <div class="ladder-header">> CONTRATO DE UPTIME:</div>
+                    <ul class="ladder-list" id="ladder-list">
+                        <!-- Será populado dinamicamente com os níveis do Show do Milhão -->
+                    </ul>
+                </div>
+            </section>
+
+            <!-- TELA 4: MODAL DE CONSELHO DOS DEVS (GRAFICO DE BARRAS) -->
+            <div id="modal-interns" class="modal-overlay">
+                <div class="modal-content glass">
+                    <h3>👨‍💻 PALPITE DOS DEVS:</h3>
+                    <p class="modal-desc">Os desenvolvedores analisaram a arquitetura e deram seus palpites (com base no Stack Overflow):</p>
+                    
+                    <div class="interns-chart-container">
+                        <div class="chart-bar-wrapper">
+                            <span class="bar-label">A</span>
+                            <div class="bar-container">
+                                <div class="bar-fill" id="bar-a" style="height: 0%"></div>
+                            </div>
+                            <span class="bar-percentage" id="pct-a">0%</span>
+                        </div>
+                        <div class="chart-bar-wrapper">
+                            <span class="bar-label">B</span>
+                            <div class="bar-container">
+                                <div class="bar-fill" id="bar-b" style="height: 0%"></div>
+                            </div>
+                            <span class="bar-percentage" id="pct-b">0%</span>
+                        </div>
+                        <div class="chart-bar-wrapper">
+                            <span class="bar-label">C</span>
+                            <div class="bar-container">
+                                <div class="bar-fill" id="bar-c" style="height: 0%"></div>
+                            </div>
+                            <span class="bar-percentage" id="pct-c">0%</span>
+                        </div>
+                        <div class="chart-bar-wrapper">
+                            <span class="bar-label">D</span>
+                            <div class="bar-container">
+                                <div class="bar-fill" id="bar-d" style="height: 0%"></div>
+                            </div>
+                            <span class="bar-percentage" id="pct-d">0%</span>
+                        </div>
+                    </div>
+                    
+                    <p class="devs-joke" style="color: var(--color-yellow); font-family: var(--font-mono); font-size: 0.8rem; margin: 10px 0 0 0; font-style: italic; border-top: 1px dashed rgba(255, 179, 0, 0.2); padding-top: 8px; text-align: center;">
+                        "Eles disseram que na máquina deles funciona..."
+                    </p>
+                    
+                    <p class="modal-disclaimer">Nota: Os devs podem estar errados. Use por sua conta e risco.</p>
+                    <button id="btn-close-interns" class="btn-primary-small">VOLTAR PRO TERMINAL</button>
+                </div>
+            </div>
+
+            <!-- TELA 8: MODAL DE RANKING (TABELA LOCALSTORAGE) -->
+            <div id="modal-ranking" class="modal-overlay">
+                <div class="modal-content glass">
+                    <h3>🏆 TOP SYSADMINS (HALL DA FAMA):</h3>
+                    <p class="modal-desc">As maiores pontuações registradas localmente no Datacenter:</p>
+                    
+                    <div class="ranking-table-container">
+                        <table class="ranking-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos</th>
+                                    <th>SysAdmin</th>
+                                    <th>Dificuldade</th>
+                                    <th>Status de Crise Alcançado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ranking-body">
+                                <!-- Preenchido dinamicamente com localStorage -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="modal-actions-row">
+                        <button id="btn-close-ranking" class="btn-primary-small">VOLTAR PRO MENU</button>
+                        <button id="btn-clear-ranking" class="btn-secondary-small">rm -rf /ranking</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TELA 6: FIM DE JOGO (FALHA / CRASH) -->
+            <section id="screen-gameover" class="game-card glass">
+                <div class="crash-container">
+                    <div class="bsod-smile">:(</div>
+                    <h2>SYSTEM CRASH - KERNEL PANIC</h2>
+                    <p class="error-code">ERROR_CODE: WRONG_ANSWER_EXCEPTION</p>
+                    <div class="crash-details-box">
+                        <p class="terminal-line">> A resposta selecionada causou um vazamento de memória fatal no servidor de produção.</p>
+                        <p class="terminal-line">> O deploy falhou em plena sexta-feira às 17:59.</p>
+                        <p class="terminal-line" id="gameover-reason"></p>
+                        <p class="terminal-line highlighter" id="gameover-score">Status de Crise Final: Nenhum</p>
+                    </div>
+                    <button id="btn-restart-crash" class="btn-primary">
+                        <span class="btn-text">REINICIAR SISTEMA (REBOOT)</span>
+                        <span class="btn-glow"></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- TELA 7: FIM DE JOGO (SUCESSO / 100% UPTIME) -->
+            <section id="screen-victory" class="game-card glass">
+                <div class="victory-container">
+                    <div class="matrix-rain-effect"></div>
+                    <div class="victory-crown">👑</div>
+                    <h2>100% UPTIME ALCANÇADO!</h2>
+                    <p class="victory-sub">Você é o Administrador Lendário de Sistemas!</p>
+                    <div class="victory-details-box">
+                        <p class="terminal-line">> Nenhum servidor caiu.</p>
+                        <p class="terminal-line">> Nenhuma senha vazou no GitHub.</p>
+                        <p class="terminal-line">> O CEO te deu tapinha nas costas (e café à vontade)!</p>
+                        <p class="terminal-line highlighter" id="victory-score">Status de Crise Final: Silêncio Absoluto (Tudo funciona, pode ir tomar café em paz)</p>
+                    </div>
+                    <button id="btn-restart-victory" class="btn-primary">
+                        <span class="btn-text">INICIAR NOVO CONTRATO</span>
+                        <span class="btn-glow"></span>
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- RODAPÉ DA CONSOLE DO SYSADMIN -->
+        <footer class="system-terminal-footer glass">
+            <div class="terminal-header">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+                <span class="term-title">sysadmin@datacenter:~</span>
+            </div>
+            <div class="terminal-output" id="terminal-output">
+                <p>[sysadmin@datacenter ~]$ ./iniciar-jogo.sh</p>
+                <p>Mecanismos locais offline prontos. Banco de dados de contingência carregado com sucesso (42 registros).</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript Lógica -->
+    <script src="script.js?v=1.0.4"></script>
+</body>
+</html>
