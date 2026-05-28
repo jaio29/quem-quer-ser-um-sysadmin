@@ -1240,10 +1240,21 @@ function startNewGame() {
 
     saveSessionState();
 
-    // Ir para tela de carregamento e buscar pergunta
-    switchScreen("loader");
-    fetchQuestion();
-    startUptimeTicker();
+    // Tirar o foco do input para fechar o teclado móvel imediatamente
+    inputs.playerName.blur();
+
+    // Pequeno atraso para dar tempo ao navegador mobile recalcular o tamanho da tela
+    setTimeout(() => {
+        // Reset de rolagem absoluto para usabilidade mobile
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+
+        // Ir para tela de carregamento e buscar pergunta
+        switchScreen("loader");
+        fetchQuestion();
+        startUptimeTicker();
+    }, 150);
 }
 
 function switchScreen(screenKey) {
@@ -1335,6 +1346,11 @@ function fetchQuestion(isRetry = false) {
 
 // Renderiza a pergunta na UI
 function renderQuestion() {
+    // Reset de rolagem absoluto no início da exibição de cada pergunta (usabilidade mobile)
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+
     const q = gameState.currentQuestion;
     gamePanel.difficultyBadge.textContent = getCurrentDifficultyForQuestion();
     gamePanel.questionIndex.textContent = `Chamado #${gameState.currentQuestionIndex + 1} / 14`;
