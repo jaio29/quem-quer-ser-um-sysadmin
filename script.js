@@ -965,7 +965,8 @@ const inputs = {
     btnDeploy: document.getElementById("btn-deploy-start"),
     btnViewRanking: document.getElementById("btn-view-ranking"),
     btnConfirmDeploy: document.getElementById("btn-confirm-deploy"),
-    btnBackMenu: document.getElementById("btn-back-menu")
+    btnBackMenu: document.getElementById("btn-back-menu"),
+    btnOpenAbout: document.getElementById("btn-open-about")
 };
 
 const gamePanel = {
@@ -996,7 +997,10 @@ const modals = {
     ranking: document.getElementById("modal-ranking"),
     btnCloseRanking: document.getElementById("btn-close-ranking"),
     btnClearRanking: document.getElementById("btn-clear-ranking"),
-    rankingBody: document.getElementById("ranking-body")
+    rankingBody: document.getElementById("ranking-body"),
+    about: document.getElementById("modal-about"),
+    btnCloseAbout: document.getElementById("btn-close-about"),
+    btnCloseAboutX: document.getElementById("btn-close-about-x")
 };
 
 const endScreens = {
@@ -1024,6 +1028,7 @@ function initEventListeners() {
     inputs.btnDeploy.addEventListener("click", () => {
         inputs.welcomeActions.classList.add("hidden");
         inputs.welcomeForm.classList.remove("hidden");
+        document.getElementById("welcome-about-menu").classList.add("hidden");
         inputs.playerName.focus();
         logTerminal("Fluxo de Deploy iniciado. Aguardando credenciais do SysAdmin...");
     });
@@ -1032,6 +1037,7 @@ function initEventListeners() {
     inputs.btnBackMenu.addEventListener("click", () => {
         inputs.welcomeForm.classList.add("hidden");
         inputs.welcomeActions.classList.remove("hidden");
+        document.getElementById("welcome-about-menu").classList.remove("hidden");
         logTerminal("Retornando ao menu principal...");
     });
 
@@ -1040,6 +1046,9 @@ function initEventListeners() {
 
     // Ver Ranking
     inputs.btnViewRanking.addEventListener("click", openRankingModal);
+
+    // Abrir About
+    inputs.btnOpenAbout.addEventListener("click", openAboutModal);
 
     // Seleção de alternativas
     gamePanel.altButtons.forEach(btn => {
@@ -1061,6 +1070,15 @@ function initEventListeners() {
     // Controles de Ranking
     modals.btnCloseRanking.addEventListener("click", () => modals.ranking.classList.remove("active"));
     modals.btnClearRanking.addEventListener("click", clearRanking);
+
+    // Controles de About
+    modals.btnCloseAbout.addEventListener("click", () => modals.about.classList.remove("active"));
+    modals.btnCloseAboutX.addEventListener("click", () => modals.about.classList.remove("active"));
+    modals.about.addEventListener("click", (e) => {
+        if (e.target === modals.about) {
+            modals.about.classList.remove("active");
+        }
+    });
 
     // Reiniciar
     endScreens.btnRestartCrash.addEventListener("click", resetToWelcome);
@@ -1542,6 +1560,7 @@ function resetToWelcome() {
     // Reseta visibilidade da tela inicial e limpa nome
     inputs.welcomeForm.classList.add("hidden");
     inputs.welcomeActions.classList.remove("hidden");
+    document.getElementById("welcome-about-menu").classList.remove("hidden");
     inputs.playerName.value = "";
     
     switchScreen("welcome");
@@ -1643,4 +1662,9 @@ function escapeHTML(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+function openAboutModal() {
+    modals.about.classList.add("active");
+    logTerminal("Modal 'About' aberto.");
 }

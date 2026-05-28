@@ -65,6 +65,13 @@
                     </button>
                 </div>
                 
+                <!-- BOTÃO ABOUT -->
+                <div class="welcome-about-container" id="welcome-about-menu">
+                    <button id="btn-open-about" class="btn-about">
+                        <span class="btn-text">ℹ️ ABOUT</span>
+                    </button>
+                </div>
+                
                 <!-- FORMULÁRIO DE DEPLOY (OCULTO POR PADRÃO) -->
                 <div class="welcome-form hidden" id="welcome-form-deploy">
                     <div class="input-group">
@@ -260,6 +267,16 @@
                         <button id="btn-close-ranking" class="btn-primary-small">VOLTAR PRO MENU</button>
                         <button id="btn-clear-ranking" class="btn-secondary-small">rm -rf /ranking</button>
                     </div>
+                </div>
+            </div>
+            
+            <!-- MODAL: ABOUT (SOBRE) -->
+            <div id="modal-about" class="modal-overlay">
+                <div class="modal-content glass modal-about-content">
+                    <button id="btn-close-about-x" class="btn-close-x" title="Fechar">&times;</button>
+                    <h3>ℹ️ ORIGEM DO PROJETO</h3>
+                    <p class="modal-desc" style="line-height: 1.6; font-family: var(--font-mono); font-size: 0.85rem;">Este jogo é uma paródia de TI inspirada no clássico programa 'Show do Milhão'. Trata-se de um projeto pessoal desenvolvido por Jailson (conhecido como Jota), criado durante o curso de Google Antigravity no SENAI, pela turma 2604NB do professor Gustavo Feriani.</p>
+                    <button id="btn-close-about" class="btn-primary-small">VOLTAR PRO MENU</button>
                 </div>
             </div>
 
