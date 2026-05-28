@@ -1350,6 +1350,14 @@ function renderQuestion() {
     });
     
     gameState.isTransitioning = false;
+    
+    // Rolagem para o topo do jogo para melhor usabilidade em dispositivos móveis
+    const container = document.querySelector(".game-container");
+    if (container) {
+        container.scrollIntoView({ behavior: "smooth" });
+    } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
 }
 
 /* -------------------------------------------------------------
