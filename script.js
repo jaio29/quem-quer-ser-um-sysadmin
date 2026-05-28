@@ -1000,7 +1000,12 @@ const modals = {
     rankingBody: document.getElementById("ranking-body"),
     about: document.getElementById("modal-about"),
     btnCloseAbout: document.getElementById("btn-close-about"),
-    btnCloseAboutX: document.getElementById("btn-close-about-x")
+    btnCloseAboutX: document.getElementById("btn-close-about-x"),
+    restore: document.getElementById("modal-restore"),
+    btnRestoreYes: document.getElementById("btn-restore-yes"),
+    btnRestoreNo: document.getElementById("btn-restore-no"),
+    restoreName: document.getElementById("restore-player-name"),
+    restoreProgress: document.getElementById("restore-player-progress")
 };
 
 const endScreens = {
@@ -1018,6 +1023,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initEventListeners();
     buildLadderUI();
     startBackgroundTelemetry();
+    checkForSavedSession();
 });
 
 // Event Listeners Principais
@@ -1078,6 +1084,20 @@ function initEventListeners() {
         if (e.target === modals.about) {
             modals.about.classList.remove("active");
         }
+    });
+
+    // Controles de Recuperação (Restore)
+    modals.btnRestoreYes.addEventListener("click", () => {
+        playClickSound();
+        const saved = JSON.parse(localStorage.getItem("sysadmin_session"));
+        if (saved) {
+            restoreGameSession(saved);
+        }
+    });
+    modals.btnRestoreNo.addEventListener("click", () => {
+        playClickSound();
+        clearSessionState();
+        modals.restore.classList.remove("active");
     });
 
     // Reiniciar
@@ -1218,6 +1238,8 @@ function startNewGame() {
     logTerminal(`Sessão iniciada para o operador: ${gameState.playerName}`);
     logTerminal(`Dificuldade: Gerenciada pela Crise (Escalada Automática)`);
 
+    saveSessionState();
+
     // Ir para tela de carregamento e buscar pergunta
     switchScreen("loader");
     fetchQuestion();
@@ -1335,6 +1357,7 @@ function renderQuestion() {
    ------------------------------------------------------------- */
 function selectAlternative(selectedIndex) {
     gameState.isTransitioning = true;
+    playClickSound();
     
     // Destaca a alternativa selecionada visualmente
     gamePanel.altButtons.forEach((btn, idx) => {
@@ -1353,6 +1376,7 @@ function selectAlternative(selectedIndex) {
         
         if (selectedIndex === correctIndex) {
             // Acertou!
+            playSuccessSound();
             gamePanel.altButtons[selectedIndex].classList.remove("selected");
             gamePanel.altButtons[selectedIndex].classList.add("correct");
             logTerminal(`Alternativa CORRETA! Processamento concluído sem gargalos.`, "success");
@@ -1363,6 +1387,7 @@ function selectAlternative(selectedIndex) {
             
         } else {
             // Errou!
+            playFailureSound();
             gamePanel.altButtons[selectedIndex].classList.remove("selected");
             gamePanel.altButtons[selectedIndex].classList.add("incorrect");
             gamePanel.altButtons[correctIndex].classList.add("correct"); // Revela correta
@@ -1387,6 +1412,7 @@ function advanceGame() {
         triggerGameOver(true);
     } else {
         gameState.currentQuestionIndex++;
+        saveSessionState();
         switchScreen("loader");
         fetchQuestion();
     }
@@ -1400,6 +1426,7 @@ function advanceGame() {
 function executeSkipHelp() {
     if (gameState.isTransitioning || gameState.skipCount <= 0) return;
     
+    playClickSound();
     gameState.skipCount--;
     hud.skipUses.textContent = `${gameState.skipCount} Usos`;
     
@@ -1408,6 +1435,7 @@ function executeSkipHelp() {
         hud.btnSkip.disabled = true; // Desabilita nativamente após esgotar os 3 usos
     }
     
+    saveSessionState();
     logTerminal(`Comando 'sudo reboot' enviado. Reiniciando chamado sem impacto na pontuação...`);
     switchScreen("loader");
     fetchQuestion();
@@ -1417,11 +1445,13 @@ function executeSkipHelp() {
 function executeServerRestartHelp() {
     if (gameState.isTransitioning || !gameState.cardsAvailable) return;
     
+    playClickSound();
     gameState.cardsAvailable = false;
     hud.cardsStatus.textContent = "Indisponível";
     hud.btnCards.classList.add("used");
     hud.btnCards.disabled = true; // Desabilita nativamente o botão de ajuda (uso único por jogo)
     
+    saveSessionState();
     logTerminal(`Reiniciando o servidor de aplicação para limpar conexões zumbis...`);
     
     // Encontra as 3 alternativas erradas
@@ -1446,40 +1476,60 @@ function executeServerRestartHelp() {
 function openInternsHelp() {
     if (gameState.isTransitioning || !gameState.internsAvailable) return;
     
+    playClickSound();
     gameState.internsAvailable = false;
     hud.internsStatus.textContent = "Indisponível";
     hud.btnInterns.classList.add("used");
     hud.btnInterns.disabled = true; // Desabilita nativamente o botão de ajuda (uso único por jogo)
     
+    saveSessionState();
     logTerminal(`Acionando time de desenvolvedores para analisar a arquitetura...`);
     
     const correctIdx = gameState.currentQuestion.correta;
     const diff = getCurrentDifficultyForQuestion();
     
     // Define a probabilidade dos devs acertarem com base na dificuldade
-    let correctProbability = 0.25; // aleatório padrão
-    if (diff === "Fácil") correctProbability = 0.78;
-    else if (diff === "Médio") correctProbability = 0.58;
-    else if (diff === "Difícil") correctProbability = 0.38;
-    else if (diff === "Supremo") correctProbability = 0.22; // programam no escuro
-    
-    // Gera as porcentagens de votação fictícias
-    let remainingVotes = 100;
-    const votes = [0, 0, 0, 0];
-    
-    // Votação da resposta correta
-    const correctVotes = Math.round(correctProbability * 100);
-    votes[correctIdx] = correctVotes;
-    remainingVotes -= correctVotes;
-    
-    // Distribui os votos restantes entre as alternativas erradas
-    let incorrectIndices = [0, 1, 2, 3].filter(idx => idx !== correctIdx);
-    for (let i = 0; i < 2; i++) {
-        const take = Math.floor(Math.random() * (remainingVotes - 5));
-        votes[incorrectIndices[i]] = take;
-        remainingVotes -= take;
+    let correctVotes = 0;
+    if (diff === "Fácil") {
+        correctVotes = Math.floor(Math.random() * 15) + 70; // 70-84%
+    } else if (diff === "Médio") {
+        correctVotes = Math.floor(Math.random() * 15) + 55; // 55-69%
+    } else if (diff === "Difícil") {
+        correctVotes = Math.floor(Math.random() * 11) + 42; // 42-52%
+    } else {
+        correctVotes = Math.floor(Math.random() * 7) + 34; // 34-40%
     }
-    votes[incorrectIndices[2]] = remainingVotes; // Resto absoluto
+    
+    let votes = [0, 0, 0, 0];
+    votes[correctIdx] = correctVotes;
+    
+    let remainingVotes = 100 - correctVotes;
+    let incorrectIndices = [0, 1, 2, 3].filter(idx => idx !== correctIdx);
+    
+    // Distribui os votos de forma que a resposta correta seja estritamente maior
+    let attempts = 0;
+    while (attempts < 100) {
+        let v1 = Math.floor(Math.random() * (Math.min(remainingVotes, correctVotes - 1) + 1));
+        let remaining2 = remainingVotes - v1;
+        let v2 = Math.floor(Math.random() * (Math.min(remaining2, correctVotes - 1) + 1));
+        let v3 = remaining2 - v2;
+        
+        if (v3 < correctVotes && v1 + v2 + v3 === remainingVotes) {
+            votes[incorrectIndices[0]] = v1;
+            votes[incorrectIndices[1]] = v2;
+            votes[incorrectIndices[2]] = v3;
+            break;
+        }
+        attempts++;
+    }
+    
+    // Fallback de contingência
+    if (votes[incorrectIndices[0]] + votes[incorrectIndices[1]] + votes[incorrectIndices[2]] !== remainingVotes) {
+        const share = Math.floor(remainingVotes / 3);
+        votes[incorrectIndices[0]] = share;
+        votes[incorrectIndices[1]] = share;
+        votes[incorrectIndices[2]] = remainingVotes - (share * 2);
+    }
     
     // Atualiza barras visuais no modal com delay para animação
     modals.interns.classList.add("active");
@@ -1506,6 +1556,7 @@ function openInternsHelp() {
 function executeQuitGame() {
     if (gameState.isTransitioning) return;
     
+    playClickSound();
     // Pega o valor da última pergunta respondida com sucesso
     const lastAnsweredIdx = gameState.currentQuestionIndex - 1;
     const finalAmountLabel = lastAnsweredIdx >= 0 ? LADDER_VALUES[lastAnsweredIdx].label : "Nenhum (Resignou no Início)";
@@ -1514,6 +1565,7 @@ function executeQuitGame() {
     logTerminal(`O operador ${gameState.playerName} assinou o pedido de demissão voluntária.`);
     
     clearInterval(gameState.uptimeTimer);
+    clearSessionState();
     
     saveScore(finalAmountLabel, finalAmountVal);
     
@@ -1528,6 +1580,7 @@ function executeQuitGame() {
    ------------------------------------------------------------- */
 function triggerGameOver(isVictory) {
     clearInterval(gameState.uptimeTimer);
+    clearSessionState();
     
     if (isVictory) {
         const winLabel = LADDER_VALUES[13].label;
@@ -1554,7 +1607,9 @@ function triggerGameOver(isVictory) {
 }
 
 function resetToWelcome() {
+    playClickSound();
     clearInterval(gameState.uptimeTimer);
+    clearSessionState();
     gamePanel.uptime.textContent = "0d 0h 0m";
     
     // Reseta visibilidade da tela inicial e limpa nome
@@ -1665,6 +1720,206 @@ function escapeHTML(str) {
 }
 
 function openAboutModal() {
+    playClickSound();
     modals.about.classList.add("active");
     logTerminal("Modal 'About' aberto.");
+}
+
+/* -------------------------------------------------------------
+   PERSISTÊNCIA DE SESSÃO E RECOVERY
+   ------------------------------------------------------------- */
+function saveSessionState() {
+    try {
+        const sessionData = {
+            playerName: gameState.playerName,
+            currentQuestionIndex: gameState.currentQuestionIndex,
+            skipCount: gameState.skipCount,
+            cardsAvailable: gameState.cardsAvailable,
+            internsAvailable: gameState.internsAvailable,
+            usedQuestions: gameState.usedQuestions,
+            inGame: true
+        };
+        localStorage.setItem("sysadmin_session", JSON.stringify(sessionData));
+    } catch (e) {
+        console.error("Error saving session state:", e);
+    }
+}
+
+function clearSessionState() {
+    try {
+        localStorage.removeItem("sysadmin_session");
+    } catch (e) {
+        console.error("Error clearing session state:", e);
+    }
+}
+
+function checkForSavedSession() {
+    try {
+        const saved = JSON.parse(localStorage.getItem("sysadmin_session"));
+        if (saved && saved.inGame) {
+            modals.restoreName.textContent = saved.playerName;
+            modals.restoreProgress.textContent = `Chamado #${saved.currentQuestionIndex + 1} / 14`;
+            modals.restore.classList.add("active");
+        }
+    } catch (e) {
+        console.error("Error reading saved session:", e);
+    }
+}
+
+function restoreGameSession(sessionData) {
+    gameState.playerName = sessionData.playerName;
+    gameState.currentQuestionIndex = sessionData.currentQuestionIndex;
+    gameState.skipCount = sessionData.skipCount;
+    gameState.cardsAvailable = sessionData.cardsAvailable;
+    gameState.internsAvailable = sessionData.internsAvailable;
+    gameState.usedQuestions = sessionData.usedQuestions || [];
+    gameState.isTransitioning = false;
+    
+    // Restore HUD state
+    hud.skipUses.textContent = `${gameState.skipCount} Usos`;
+    if (gameState.skipCount === 0) {
+        hud.btnSkip.classList.add("used");
+        hud.btnSkip.disabled = true;
+    } else {
+        hud.btnSkip.classList.remove("used");
+        hud.btnSkip.disabled = false;
+    }
+    
+    if (!gameState.cardsAvailable) {
+        hud.cardsStatus.textContent = "Indisponível";
+        hud.btnCards.classList.add("used");
+        hud.btnCards.disabled = true;
+    } else {
+        hud.cardsStatus.textContent = "Disponível";
+        hud.btnCards.classList.remove("used");
+        hud.btnCards.disabled = false;
+    }
+    
+    if (!gameState.internsAvailable) {
+        hud.internsStatus.textContent = "Indisponível";
+        hud.btnInterns.classList.add("used");
+        hud.btnInterns.disabled = true;
+    } else {
+        hud.internsStatus.textContent = "Disponível";
+        hud.btnInterns.classList.remove("used");
+        hud.btnInterns.disabled = false;
+    }
+    
+    logTerminal(`Sessão restaurada para o operador: ${gameState.playerName}`);
+    logTerminal(`Retomando do chamado chamado #${gameState.currentQuestionIndex + 1}...`);
+    
+    // Close modal
+    modals.restore.classList.remove("active");
+    
+    // Go to loader and fetch question
+    switchScreen("loader");
+    fetchQuestion();
+    startUptimeTicker();
+}
+
+/* -------------------------------------------------------------
+   EFEITOS SONOROS NATIVOS (WEB AUDIO API)
+   ------------------------------------------------------------- */
+let audioCtx = null;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
+function playClickSound() {
+    try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05);
+        
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+    } catch (e) {
+        console.error("Audio error:", e);
+    }
+}
+
+function playSuccessSound() {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        
+        const notes = [261.63, 329.63, 392.00, 523.25];
+        const duration = 0.1;
+        const gap = 0.08;
+        
+        notes.forEach((freq, index) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.type = "square";
+            osc.frequency.setValueAtTime(freq, now + index * gap);
+            
+            gain.gain.setValueAtTime(0.0, now + index * gap);
+            gain.gain.linearRampToValueAtTime(0.15, now + index * gap + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + index * gap + duration);
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start(now + index * gap);
+            osc.stop(now + index * gap + duration);
+        });
+    } catch (e) {
+        console.error("Audio error:", e);
+    }
+}
+
+function playFailureSound() {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const duration = 1.0;
+        
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.linearRampToValueAtTime(60, now + duration);
+        
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        lfo.frequency.value = 10;
+        lfoGain.gain.value = 30;
+        
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+        
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.2, now + duration - 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        lfo.start(now);
+        osc.start(now);
+        
+        lfo.stop(now + duration);
+        osc.stop(now + duration);
+    } catch (e) {
+        console.error("Audio error:", e);
+    }
 }

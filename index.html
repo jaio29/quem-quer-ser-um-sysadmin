@@ -283,6 +283,25 @@
                 </div>
             </div>
 
+            <!-- MODAL: RECUPERAÇÃO DE SESSÃO -->
+            <div id="modal-restore" class="modal-overlay">
+                <div class="modal-content glass modal-about-content" style="border-color: var(--color-yellow); box-shadow: 0 0 25px rgba(255, 179, 0, 0.25); position: relative;">
+                    <h3>⚠️ ALERTA DE SISTEMA: RECOVERY DETECTADO</h3>
+                    <p class="modal-desc" style="line-height: 1.6; font-family: var(--font-mono); font-size: 0.85rem;">
+                        [SYSTEM] Uma sessão de deploy anterior interrompida foi encontrada na memória local.<br><br>
+                        <strong>Operador:</strong> <span id="restore-player-name" style="color: var(--color-cyan);">--</span><br>
+                        <strong>Progresso:</strong> <span id="restore-player-progress" style="color: var(--color-green);">--</span>
+                    </p>
+                    <p class="modal-desc" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-secondary);">
+                        Deseja retomar a sessão ativa ou iniciar um novo deploy do zero?
+                    </p>
+                    <div class="modal-actions-row">
+                        <button id="btn-restore-yes" class="btn-restore-yes-btn">RETOMAR TURNO</button>
+                        <button id="btn-restore-no" class="btn-restore-no-btn">INICIAR NOVO TURNO</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- TELA 6: FIM DE JOGO (FALHA / CRASH) -->
             <section id="screen-gameover" class="game-card glass">
                 <div class="crash-container">
